@@ -1,0 +1,38 @@
+{
+  "variables": {
+    "ami_id": "ami-0c2fb7021e87de5f3",
+    "ami_users": "076594877490",
+    "ami_owners": "076594877490",
+    "aws_region": "eu-west-1"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "region": "{{user `aws_region`}}",
+    "source_ami_filter": {
+      "filters": {
+        "name": "base*",
+        "root-device-type": "ebs",
+        "virtualization-type": "hvm"
+      },
+      "owners": ["{{ user `ami_owners`}}"],
+      "most_recent": true
+    },
+    "instance_type": "t2.micro",
+    "ssh_username": "ubuntu",
+    "ami_name": "bastion-{{isotime | clean_ami_name}}",
+    "ami_users": ["{{ user `ami_users`}}"],
+    "tags": {
+      "Name": "bastion"
+    },
+    "run_tags": {
+      "Name": "packer-builder:dev"
+    }
+  }],
+  "provisioners": [
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/bastion.yml",
+      "playbook_dir": "ansible"
+    }
+  ]
+}

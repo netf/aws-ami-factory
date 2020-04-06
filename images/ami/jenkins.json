@@ -1,0 +1,37 @@
+{
+  "variables": {
+    "ami_users": "070306865980",
+    "ami_owners": "070306865980",
+    "aws_region": "eu-west-1"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "region": "{{user `aws_region`}}",
+    "source_ami_filter": {
+      "filters": {
+        "name": "dp-ami-base*",
+        "root-device-type": "ebs",
+        "virtualization-type": "hvm"
+      },
+      "owners": ["{{ user `ami_owners`}}"],
+      "most_recent": true
+    },
+    "instance_type": "t2.micro",
+    "ssh_username": "ec2-user",
+    "ami_name": "jenkins-{{isotime | clean_ami_name}}",
+    "ami_users": ["{{ user `ami_users`}}"],
+    "tags": {
+      "Name": "jenkins"
+    },
+    "run_tags": {
+      "Name": "packer-builder:dev"
+    }
+  }],
+  "provisioners": [
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/jenkins.yml",
+      "playbook_dir": "ansible"
+    }
+  ]
+}

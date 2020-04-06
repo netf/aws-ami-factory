@@ -1,0 +1,61 @@
+{
+  "variables": {
+    "ami_id": "ami-0713f98de93617bb4",
+    "aws_region": "eu-west-1"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "region": "{{user `aws_region`}}",
+    "source_ami_filter": {
+      "filters": {
+        "virtualization-type": "hvm",
+        "name": "amzn2-ami-hvm-2.0.*-x86_64-gp2",
+        "root-device-type": "ebs"
+      },
+      "owners": ["amazon"],
+      "most_recent": true
+    },
+    "instance_type": "t2.micro",
+    "ssh_username": "ec2-user",
+    "ami_name": "dp-ami-base-{{isotime | clean_ami_name}}",
+    "ami_users": ["076594877490"],
+    "subnet_filter": {
+      "filters": {
+        "tag:Type": "build"
+      },
+      "most_free": true,
+      "random": false
+    },
+    "launch_block_device_mappings": [
+      {
+        "device_name": "/dev/sda1",
+        "volume_size": 10,
+        "volume_type": "gp2",
+        "delete_on_termination": true
+      }
+    ],
+    "tags": {
+      "Name": "base",
+      "Revision": "{{ user `git_revision`}}"
+    },
+    "run_tags": {
+      "Name": "packer-builder:dev"
+    }
+  }],
+ "provisioners": [
+    {
+      "type": "shell",
+      "execute_command": "sudo -H sh -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": [
+        "packer/scripts/full-upgrade.sh",
+        "packer/scripts/ansible.sh"
+      ],
+      "expect_disconnect": true
+    }, 
+    {
+      "type": "ansible-local",
+      "playbook_file": "ansible/base.yml",
+      "playbook_dir": "ansible"
+    }
+  ]
+}
